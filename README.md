@@ -166,3 +166,59 @@ int main()
 }
 
 ```
+
+## Vector
+
+```c++
+class Vector {
+private:
+    int* data;
+    size_t size;
+    size_t capacity;
+
+public:
+    Vector() : data(nullptr), size(0), capacity(0) {};
+
+    size_t size() const {
+        return size;
+    };
+
+    size_t capacity() const {
+        return capacity;
+    }
+
+    void reserve(size_t n) {
+        if (n <= size) return;
+        int* newData = new int[n]; // аллоцировали кусок памяти
+
+        // В цикле перезаписали данные из предыдущего куска в новый
+        for (size_t i = 0; i < size; ++i) {
+            newData[i] = data[i];
+        }
+        delete[] data;
+        data = newData; 
+        capacity = n;
+    };
+
+    void push_back(int n) {
+        if (capacity == size) {
+            reserve(2 * size);  // если памяти не хватает, выделяем в два раза больше
+        }
+        data[size] = n;
+        ++size;
+    };
+
+    void shrink_to_fit() {
+        if (capacity > size) {
+            int* newData = new int[size];
+            for (size_t i = 0; i < size; ++i) {
+                newData[i] = data[i];
+            }
+
+            delete[] data;
+            data = newData;
+            capacity = size;
+        }
+    };
+};
+```
