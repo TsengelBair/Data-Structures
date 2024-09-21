@@ -170,55 +170,132 @@ int main()
 ## Vector
 
 ```c++
-class Vector {
-private:
-    int* data;
-    size_t size;
-    size_t capacity;
+// Для избежания конфликов с std
+namespace MyNamespace {
 
-public:
-    Vector() : data(nullptr), size(0), capacity(0) {};
+    class Vector {
+    private:
+        int* data;
+        size_t _size;     
+        size_t _capacity; 
 
-    size_t size() const {
-        return size;
-    };
+    public:
+        Vector() : data(nullptr), _size(0), _capacity(0) {}
 
-    size_t capacity() const {
-        return capacity;
-    }
-
-    void reserve(size_t n) {
-        if (n <= size) return;
-        int* newData = new int[n]; // аллоцировали кусок памяти
-
-        // В цикле перезаписали данные из предыдущего куска в новый
-        for (size_t i = 0; i < size; ++i) {
-            newData[i] = data[i];
+        size_t size() const {
+            return _size; 
         }
-        delete[] data;
-        data = newData; 
-        capacity = n;
-    };
 
-    void push_back(int n) {
-        if (capacity == size) {
-            reserve(2 * size);  // если памяти не хватает, выделяем в два раза больше
+        size_t capacity() const {
+            return _capacity; 
         }
-        data[size] = n;
-        ++size;
-    };
 
-    void shrink_to_fit() {
-        if (capacity > size) {
-            int* newData = new int[size];
-            for (size_t i = 0; i < size; ++i) {
+        void clear() {
+            delete[] data;
+            data = nullptr; 
+            _size = 0;
+            _capacity = 0;
+        };
+
+        void reserve(size_t n) {
+            if (n <= _capacity) return;
+
+            // Выделяем новый кусок памяти и перезаписываем в него значения из текущего
+            int* newData = new int[n];
+            for (size_t i = 0; i < _size; ++i) {
+                newData[i] = data[i];
+            }
+            delete[] data;
+            data = newData;
+            _capacity = n;
+        };
+
+        void resize(size_t p_size, int value) {
+            // если переданная p_size меньше -> просто обрезаем до указанной длины
+            if (p_size < _size) {
+                _size = p_size; // теперь индексы за пределами недоступны
+            }
+            else if (p_size == _size) {
+                return;
+            }
+            else {
+                reserve(p_size); // выделяем новый кусок памяти с перезаписью текущих значений
+
+                // в цикле после предыдущих добавляем новые переданные value
+                for (size_t i = _size; i < p_size; ++i) {
+                    data[i] = value;
+                }
+
+                _size = p_size;
+            }
+        };
+
+        void shrink_to_fit() {
+            if (_capacity == _size) return;
+
+            int* newData = new int[_size];
+            for (size_t i = 0; i < _size; ++i) {
                 newData[i] = data[i];
             }
 
             delete[] data;
             data = newData;
-            capacity = size;
+            _capacity = _size;
+        };
+
+        void push_back(const int elem) {
+            if (_capacity == _size) {
+                reserve(_size ? _size * 2 : 1); // если вектор пуст, reserve выделит память под один эл-т
+            }
+
+            data[_size] = elem;
+            ++_size;
+        };
+
+        void pop_back() {
+            if (_size == 0) return;
+
+            --_size; // просто уменьшаем размер
+
+            // Для освобождения памяти можно вызвать shrink_to_fit()
+            // Но это необязательно, т.к. выделенную память займут новые элементы
+        };
+
+        int at(size_t index) const {
+            if (index >= _size) {
+                throw std::out_of_range("Index out of range");
+            }
+            return data[index];
         }
     };
-};
+}
+
+int main() {
+    MyNamespace::Vector myVec;
+
+    // Тестирование push_back
+    myVec.push_back(10);
+    myVec.push_back(20);
+    myVec.push_back(30);
+
+    // Тестирование размера и емкости
+    std::cout << "MyNamespace::Vector size: " << myVec.size() << std::endl; // Ожидается 3
+    std::cout << "MyNamespace::Vector capacity: " << myVec.capacity() << std::endl; // Ожидается 4 или больше
+
+    // Тестирование доступа к элементам
+    for (size_t i = 0; i < myVec.size(); ++i) {
+        std::cout << "Element at index " << i << ": " << myVec.at(i) << std::endl;
+    }
+
+    // Тестирование pop_back
+    myVec.pop_back();
+    std::cout << "After pop_back, size: " << myVec.size() << std::endl; // Ожидается 2
+
+    // Тестирование clear
+    myVec.clear();
+    std::cout << "After clear, size: " << myVec.size() << std::endl; // Ожидается 0
+    std::cout << "After clear, capacity: " << myVec.capacity() << std::endl; // Ожидается 0
+
+    return 0;
+}
 ```
