@@ -128,132 +128,95 @@ public:
 ## Vector
 
 ```c++
-// Для избежания конфликов с std
-namespace MyNamespace {
+template <typename T>
+class Vector {
+private:
+    T* data;
+    size_t size;
+    size_t capacity;
 
-    class Vector {
-    private:
-        int* data;
-        size_t _size;     
-        size_t _capacity; 
+public:
+    Vector() : data(nullptr), size(0), capacity(0) {}
 
-    public:
-        Vector() : data(nullptr), _size(0), _capacity(0) {}
-
-        size_t size() const {
-            return _size; 
-        }
-
-        size_t capacity() const {
-            return _capacity; 
-        }
-
-        void clear() {
-            delete[] data;
-            data = nullptr; 
-            _size = 0;
-            _capacity = 0;
-        };
-
-        void reserve(size_t n) {
-            if (n <= _capacity) return;
-
-            // Выделяем новый кусок памяти и перезаписываем в него значения из текущего
-            int* newData = new int[n];
-            for (size_t i = 0; i < _size; ++i) {
-                newData[i] = data[i];
-            }
-            delete[] data;
-            data = newData;
-            _capacity = n;
-        };
-
-        void resize(size_t p_size, int value) {
-            // если переданная p_size меньше -> просто обрезаем до указанной длины
-            if (p_size < _size) {
-                _size = p_size; // теперь индексы за пределами недоступны
-            }
-            else if (p_size == _size) {
-                return;
-            }
-            else {
-                reserve(p_size); // выделяем новый кусок памяти с перезаписью текущих значений
-
-                // в цикле после предыдущих добавляем новые переданные value
-                for (size_t i = _size; i < p_size; ++i) {
-                    data[i] = value;
-                }
-
-                _size = p_size;
-            }
-        };
-
-        void shrink_to_fit() {
-            if (_capacity == _size) return;
-
-            int* newData = new int[_size];
-            for (size_t i = 0; i < _size; ++i) {
-                newData[i] = data[i];
-            }
-
-            delete[] data;
-            data = newData;
-            _capacity = _size;
-        };
-
-        void push_back(const int elem) {
-            if (_capacity == _size) {
-                reserve(_size ? _size * 2 : 1); // если вектор пуст, reserve выделит память под один эл-т
-            }
-
-            data[_size] = elem;
-            ++_size;
-        };
-
-        void pop_back() {
-            if (_size == 0) return;
-
-            --_size; // просто уменьшаем размер
-
-            // Для освобождения памяти можно вызвать shrink_to_fit()
-            // Но это необязательно, т.к. выделенную память займут новые элементы
-        };
-
-        int at(size_t index) const {
-            if (index >= _size) {
-                throw std::out_of_range("Index out of range");
-            }
-            return data[index];
-        }
-    };
-}
-
-int main() {
-    MyNamespace::Vector myVec;
-
-    // Тестирование push_back
-    myVec.push_back(10);
-    myVec.push_back(20);
-    myVec.push_back(30);
-
-    // Тестирование размера и емкости
-    std::cout << "MyNamespace::Vector size: " << myVec.size() << std::endl; // Ожидается 3
-    std::cout << "MyNamespace::Vector capacity: " << myVec.capacity() << std::endl; // Ожидается 4 или больше
-
-    // Тестирование доступа к элементам
-    for (size_t i = 0; i < myVec.size(); ++i) {
-        std::cout << "Element at index " << i << ": " << myVec.at(i) << std::endl;
+    ~Vector() {
+        clear();
     }
 
-    // Тестирование pop_back
-    myVec.pop_back();
-    std::cout << "After pop_back, size: " << myVec.size() << std::endl; // Ожидается 2
+    size_t getSize() const {
+        return size;
+    }
 
-    // Тестирование clear
-    myVec.clear();
-    std::cout << "After clear, size: " << myVec.size() << std::endl; // Ожидается 0
-    std::cout << "After clear, capacity: " << myVec.capacity() << std::endl; // Ожидается 0
+    size_t getCapacity() const {
+        return capacity;
+    }
 
-    return 0;
+    void clear() {
+        delete[] data;
+        data = nullptr;
+        size = 0;
+        capacity = 0;
+    }
+
+    void reserve(size_t n) {
+        if (n <= capacity) return;
+
+        T* newData = new T[n]; 
+        for (size_t i = 0; i < size; ++i) {
+            newData[i] = data[i];
+        }
+        delete[] data;
+        data = newData;
+        capacity = n;
+    }
+
+    void resize(size_t p_size, const T& value = T()) { 
+        if (p_size < size) {
+            size = p_size;
+        }
+        else if (p_size == size) {
+            return;
+        }
+        else {
+            reserve(p_size);
+            for (size_t i = size; i < p_size; ++i) {
+                data[i] = value;
+            }
+            size = p_size;
+        }
+    }
+
+    void shrink_to_fit() {
+        if (capacity == size) return;
+
+        T* newData = new T[size];
+        for (size_t i = 0; i < size; ++i) {
+            newData[i] = data[i];
+        }
+        delete[] data;
+        data = newData;
+        capacity = size;
+    }
+
+    void push_back(const T& elem) {
+        if (capacity == size) {
+            reserve(size ? size * 2 : 1);
+        }
+        data[size] = elem;
+        ++size;
+    }
+
+    void pop_back() {
+        if (size == 0) return;
+
+        --size;
+    }
+
+    T at(size_t index) const { 
+        if (index >= size) {
+            throw std::out_of_range("Index out of range");
+        }
+        return data[index];
+    }
+};
 }
 ```
